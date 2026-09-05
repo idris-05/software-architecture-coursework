@@ -1,0 +1,55 @@
+---
+title: "Vue C&C - Pipe et Filtre + Adaptateur de sortie"
+---
+flowchart LR
+    subgraph UI["Interface"]
+        BTN["Boutons GUI"]
+        VIEW["MainGUI"]
+    end
+
+    subgraph CMP1["CMP1 - Source"]
+        GUISRC["GuiSourceFilter"]
+    end
+
+    subgraph ORCH["Orchestration"]
+        PIPELINE["CalculatorPipeline.run()"]
+    end
+
+    subgraph CMP2["CMP2 - Compute"]
+        COMPUTE["ComputeFilter"]
+    end
+
+    subgraph CMP3["CMP3 - Trace"]
+        TRACEFILTER["TraceFilter"]
+    end
+
+    subgraph CMP4["CMP4 - Output Adapter"]
+        ADAPT["GuiOutputAdapter"]
+    end
+
+    REQ["requestPipe\nCalculationRequest"]
+    RES["resultPipe\nCalculationResult"]
+    TRC["tracePipe\nTraceRecord"]
+    FS[("data/track.trc")]
+
+    BTN --> GUISRC
+
+    GUISRC -->|"push request"| REQ
+    GUISRC -->|"trigger"| PIPELINE
+
+    PIPELINE --> COMPUTE
+    REQ -->|"pull"| COMPUTE
+    COMPUTE -->|"push"| RES
+
+    PIPELINE --> TRACEFILTER
+    RES -->|"pull"| TRACEFILTER
+    TRACEFILTER -->|"push"| TRC
+    TRACEFILTER -->|"persist"| FS
+
+    PIPELINE --> ADAPT
+    TRC -->|"pull"| ADAPT
+    ADAPT -->|"showResult"| VIEW
+
+    BTN -. "Trace button -> loadTrace" .-> PIPELINE
+    PIPELINE -. "loadTrace()" .-> TRACEFILTER
+    TRACEFILTER -. "read trace" .-> FS

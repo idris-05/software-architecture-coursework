@@ -1,0 +1,23 @@
+# Maven build outputs
+calc-project/calc-server/target/
+
+# Runtime generated files (KEEP - user requested to keep history)
+# history.txt
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*~

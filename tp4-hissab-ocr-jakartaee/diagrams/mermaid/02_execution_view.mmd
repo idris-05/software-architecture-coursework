@@ -1,0 +1,44 @@
+graph LR
+    subgraph Browser [Browser]
+        UI["User Interface<br/>HTML / CSS / JS"]
+    end
+
+    subgraph GlassFish ["GlassFish 7 - Application Server"]
+        subgraph Servlets [Servlet Container]
+            HS["HissabServlet<br/>POST /process"]
+            HIST["HistoryServlet<br/>GET /history"]
+        end
+
+        subgraph EJBs [EJB Container]
+            OCR["OcrEJB<br/>Stateless"]
+            CALC["CalcEJB<br/>Stateless"]
+            TRACE["TraceEJB<br/>Stateless"]
+        end
+
+        UTIL["MathSanitizer<br/>FileUploadHelper"]
+        EL["EclipseLink JPA<br/>hissabPU / JTA"]
+    end
+
+    subgraph Infra [Linux Host]
+        TESS["Tesseract OCR 5<br/>fra + eng"]
+        DS["JDBC DataSource<br/>jdbc/hissabDS"]
+        PG[("PostgreSQL<br/>computation_trace")]
+    end
+
+    UI -->|"HTTP POST multipart"| HS
+    UI -->|"HTTP GET"| HIST
+
+    HS -->|"extract file"| UTIL
+    HS -->|"local EJB"| OCR
+    HS -->|"local EJB"| CALC
+    HS -->|"local EJB"| TRACE
+    HIST -->|"local EJB"| TRACE
+
+    OCR -->|"JNI / Tess4j"| TESS
+    TRACE -->|"persist / JPQL"| EL
+
+    EL -->|"JDBC"| DS
+    DS -->|"TCP 5432"| PG
+
+    HS -->|"forward"| UI
+    HIST -->|"forward"| UI

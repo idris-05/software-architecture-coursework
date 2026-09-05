@@ -1,0 +1,43 @@
+graph TB
+    subgraph Machine [Linux Server]
+
+        subgraph Build [Maven Build]
+            POM["pom.xml<br/>Java 21 · Jakarta EE 10<br/>Tess4j · PostgreSQL JDBC"]
+            WAR["hissab-1.0-SNAPSHOT.war"]
+            POM -->|"mvn package"| WAR
+        end
+
+        subgraph Scripts [Shell Scripts]
+            S1["start-domain.sh"]
+            S2["setup-jdbc.sh"]
+            S3["build.sh + deploy.sh"]
+        end
+
+        subgraph GF ["GlassFish 7 Domain :8080"]
+
+            subgraph Deploy ["context-root /hissab"]
+                SRV["Servlets<br/>HissabServlet · HistoryServlet"]
+                EJBC["EJBs<br/>CalcEJB · OcrEJB · TraceEJB"]
+                VIEWS["JSP Views<br/>index · result · history · error"]
+                STATIC["Static Assets<br/>css · js · img"]
+            end
+
+            DS2["JDBC Resource<br/>jdbc/hissabDS"]
+        end
+
+        subgraph TESS2 [Tesseract OCR 5]
+            LANG["/usr/share/tesseract-ocr/5/tessdata/<br/>fra.traineddata · eng.traineddata"]
+        end
+
+        subgraph PG2 ["PostgreSQL :5432"]
+            DB[("hissab database<br/>computation_trace<br/>auto DDL via EclipseLink")]
+        end
+
+        WAR -->|"asadmin deploy"| SRV
+        Scripts -->|"orchestrates"| GF
+        EJBC -->|"JNI"| TESS2
+        DS2 -->|"TCP"| PG2
+        SRV --> DS2
+    end
+
+    DEV["Developer / Browser"] -->|"HTTP :8080/hissab"| GF

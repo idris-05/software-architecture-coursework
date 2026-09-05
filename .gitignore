@@ -1,0 +1,35 @@
+# Build outputs (all projects)
+out/
+build/
+target/
+*.class
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+
+# OS
+.DS_Store
+Thumbs.db
+
+# JAR artifacts (except interpreter.jar in TP1-3 lib folders)
+*.jar
+!tp1-calculator-monolith/lib/interpreter.jar
+!tp2-calculator-pipe-filter/lib/interpreter.jar
+!tp3-calculator-layered-mvp/lib/interpreter.jar
+
+# Maven (TP4, TP5)
+tp4-hissab-ocr-jakartaee/hissab/target/
+tp5-calc-distributed-rest-soap/calc-project/calc-server/target/
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*~

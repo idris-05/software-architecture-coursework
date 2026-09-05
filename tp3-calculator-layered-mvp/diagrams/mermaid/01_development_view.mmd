@@ -1,0 +1,66 @@
+---
+config:
+  theme: redux
+  look: neo
+---
+classDiagram
+direction LR
+    class App["calculator.app.CalculatorApplication"] {
+    }
+
+    class IView["calculator.presentation.view.CalculatorView"] {
+    }
+
+    class SwingView["calculator.presentation.view.SwingCalculatorView"] {
+    }
+
+    class Presenter["calculator.presentation.presenter.CalculatorPresenter"] {
+    }
+
+    class IService["calculator.service.CalculatorService"] {
+    }
+
+    class ServiceImpl["calculator.service.CalculatorApplicationService"] {
+    }
+
+    class IComputation["calculator.service.ComputationGateway"] {
+    }
+
+    class Adapter["calculator.adapter.InterpreterComputationGateway"] {
+    }
+
+    class ITraceRepo["calculator.persistence.TraceRepository"] {
+    }
+
+    class TraceRepo["calculator.persistence.FileTraceRepository"] {
+    }
+
+    class TraceEntry["calculator.domain.TraceEntry"] {
+    }
+
+    class Evaluator["interpreter.Evaluator"] {
+    }
+
+	<<interface>> IView
+	<<interface>> IService
+	<<interface>> IComputation
+	<<interface>> ITraceRepo
+	<<external>> Evaluator
+
+    SwingView ..|> IView
+    ServiceImpl ..|> IService
+    Adapter ..|> IComputation
+    TraceRepo ..|> ITraceRepo
+    App --> SwingView : creates
+    App --> Presenter : creates
+    App --> ServiceImpl : creates
+    App --> Adapter : creates
+    App --> TraceRepo : creates
+    Presenter --> IView : uses
+    Presenter --> IService : uses
+    ServiceImpl --> IComputation : uses
+    ServiceImpl --> ITraceRepo : uses
+    ServiceImpl --> TraceEntry : creates
+    Adapter --> Evaluator : uses
+    ITraceRepo --> TraceEntry : save(entry)
+    TraceRepo --> TraceEntry : formats

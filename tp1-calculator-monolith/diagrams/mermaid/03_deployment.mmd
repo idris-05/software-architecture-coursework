@@ -1,0 +1,23 @@
+---
+title: "Allocation View — Deployment Diagram"
+---
+graph TB
+    subgraph MACHINE["«device» User Machine"]
+        subgraph WORKDIR["«storage» Working Directory"]
+            TRC[("«file» data/track.trc")]
+        end
+
+        subgraph JVM["«executionEnvironment» JVM"]
+            subgraph CALC_ART["«artifact» calculator application"]
+                CALC_APP["«component» Calculator App"]
+                TRACE["«component» Trace"]
+            end
+
+            subgraph INTERP_ART["«artifact» interpreter.jar"]
+                INTERP["«component» Interpreter"]
+            end
+        end
+    end
+
+    CALC_APP -. uses call .-> INTERP
+    TRACE -->|"read/write call"| TRC

@@ -1,0 +1,30 @@
+---
+title: "Component-and-Connector View — Development / Package Diagram"
+---
+graph TB
+    subgraph JVM["JVM Runtime"]
+        subgraph calc_pkg["package: calculator"]
+            GUI["MainGUI<br/>(Presentation)"]
+            CALCUL["Calcul<br/>(Adapter)"]
+            TRACE["Trace<br/>(Persistence)"]
+        end
+
+        subgraph interp_pkg["package: interpreter"]
+            INTERP["Interpreter module<br/>(Evaluator + Expression hierarchy)"]
+        end
+    end
+
+    FS[("data/track.trc<br/>(File System)")]
+
+    %% GUI → Calcul: method call, returns long
+    GUI -->|"somme/prod/fact/random()<br/>returns long"| CALCUL
+
+    %% GUI → Trace: direct call to log operation
+    GUI -->|"logs trace directly<br/>savop(...) / lireopToTextArea(...)"| TRACE
+
+    %% Calcul → Interpreter: package-level dependency and runtime call
+    CALCUL -->|"builds RPN string<br/>and delegates evaluation"| INTERP
+    CALCUL -.uses.-> INTERP
+
+    %% Trace ↔ File System
+    TRACE <-->|"ObjectOutputStream<br/>ObjectInputStream"| FS

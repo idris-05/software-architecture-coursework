@@ -1,0 +1,112 @@
+---
+title: "Module View — Class Diagram"
+---
+classDiagram
+    direction TB
+
+    %% ─── interpreter package ───────────────────────────────────────────────
+    namespace interpreter {
+        class Expression {
+            <<interface>>
+            +interpret(variables : Map) long
+        }
+        class Number {
+            <<terminal>>
+            -number : long
+            +Number(number : long)
+            +interpret(variables : Map) long
+        }
+        class Variable {
+            <<terminal>>
+            -name : String
+            +Variable(name : String)
+            +interpret(variables : Map) long
+        }
+        class Plus {
+            <<non-terminal>>
+            -leftOperand : Expression
+            -rightOperand : Expression
+            +Plus(left : Expression, right : Expression)
+            +interpret(variables : Map) long
+        }
+        class Minus {
+            <<non-terminal>>
+            -leftOperand : Expression
+            -rightOperand : Expression
+            +Minus(left : Expression, right : Expression)
+            +interpret(variables : Map) long
+        }
+        class Multiply {
+            <<non-terminal>>
+            -leftOperand : Expression
+            -rightOperand : Expression
+            +Multiply(left : Expression, right : Expression)
+            +interpret(variables : Map) long
+        }
+        class Evaluator {
+            <<RPN parser>>
+            -syntaxTree : Expression
+            +Evaluator(expression : String)
+            +interpret(context : Map) long
+        }
+    }
+
+    %% ─── calculator package ─────────────────────────────────────────────────
+    namespace calculator {
+        class Calcul {
+            <<adapter>>
+            -CONTEXT : Map$
+            -RANDOM : Random$
+            +somme(c : int, d : int) long$
+            +prod(c : int, d : int) long$
+            +fact(n : int) long$
+            +random() long$
+            -evaluate(expression : String) long$
+        }
+        class MainGUI {
+            -field1 : JTextField
+            -field2 : JTextField
+            -traceArea : JTextArea
+            -resultLabel : JLabel
+            +MainGUI()
+            -showResultAndSaveTrace(labelPrefix, op, left, right, result)
+            -showError(ex : Exception)
+            +main(args : String[])$
+        }
+        class Trace {
+            -TRACE_FILE : Path$
+            +savop(op : char, opg : int, opd : int, res : long)$
+            +lireopToTextArea(area : JTextArea)$
+        }
+        class Operation {
+            <<serializable>>
+            +o : char
+            +g : int
+            +d : int
+            +r : long
+            +Operation(o, g, d, r)
+        }
+    }
+
+    %% ─── Interpreter pattern relationships ──────────────────────────────────
+    Expression      <|..        Number      : implements
+    Expression      <|..        Variable    : implements
+    Expression      <|..        Plus        : implements
+    Expression      <|..        Minus       : implements
+    Expression      <|..        Multiply    : implements
+    Expression      <|..        Evaluator   : implements
+    Plus            o--         Expression  : leftOperand
+    Plus            o--         Expression  : rightOperand
+    Minus           o--         Expression  : leftOperand
+    Minus           o--         Expression  : rightOperand
+    Multiply        o--         Expression  : leftOperand
+    Multiply        o--         Expression  : rightOperand
+    Evaluator       o--         Expression  : syntaxTree
+
+    %% ─── Main architectural path: GUI -> Calcul -> Evaluator -> Expression ──
+    MainGUI         -->         Calcul      : calls
+    Calcul          ..>         Evaluator   : builds RPN & delegates
+
+    %% ─── Supporting persistence path ────────────────────────────────────────
+    MainGUI         -->         Trace       : logs / reads trace
+    Trace           ..>         Operation   : creates

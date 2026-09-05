@@ -1,0 +1,23 @@
+graph LR
+
+    subgraph CLIENT["Client Node"]
+        BROWSER["Web Browser<br/>HTML / CSS / JavaScript"]
+    end
+
+    subgraph SERVER["Server Node"]
+        REST["REST Service<br/>Port 8080"]
+        SOAP["SOAP Service<br/>Port 8081"]
+
+        CALC["Calculator"]
+        HM["HistoryManager"]
+        FILE[("history.txt")]
+    end
+
+    BROWSER -- HTTP/JSON --> REST
+    BROWSER -- HTTP/XML (SOAP) --> SOAP
+
+    REST --> CALC
+    SOAP --> CALC
+
+    CALC --> HM
+    HM --> FILE

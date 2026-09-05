@@ -1,0 +1,34 @@
+%%{init: {"layout": "elk"}}%%
+flowchart LR
+
+User([User])
+
+subgraph JVM["JVM Runtime"]
+  subgraph Presentation["Presentation"]
+    View["SwingCalculatorView<br/>(View)"]
+    Presenter["CalculatorPresenter<br/>(Presenter)"]
+  end
+
+  subgraph Service["Service / Business Logic"]
+    ServiceImpl["CalculatorApplicationService<br/>(Service)"]
+  end
+
+  subgraph Persistence["Persistence"]
+    Repo["FileTraceRepository<br/>(Repository)"]
+  end
+
+  subgraph Integration["Adapter / Integration"]
+    Gateway["InterpreterComputationGateway<br/>(Adapter)"]
+  end
+end
+
+Interp[["interpreter.jar<br/>(Evaluator + Expression hierarchy)"]]
+TraceFile[("data/track.trc<br/>(File System)")]
+
+User -->|input / actions| View
+View <--> Presenter
+Presenter -->|use cases| ServiceImpl
+ServiceImpl -->|computation requests| Gateway
+Gateway -->|in-process calls| Interp
+ServiceImpl -->|save / load trace| Repo
+Repo -->|read / write| TraceFile

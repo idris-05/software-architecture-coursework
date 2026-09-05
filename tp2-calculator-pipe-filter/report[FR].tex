@@ -1,0 +1,282 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{enumitem}
+
+\geometry{margin=2.5cm}
+
+% ── Code style ──────────────────────────────────────────────────────────────
+\definecolor{codebg}{RGB}{245,245,245}
+\definecolor{codeframe}{RGB}{200,200,200}
+\definecolor{keyword}{RGB}{0,0,180}
+\definecolor{comment}{RGB}{80,120,80}
+\definecolor{string}{RGB}{160,0,0}
+
+\lstset{
+  language=Java,
+  backgroundcolor=\color{codebg},
+  frame=single,
+  rulecolor=\color{codeframe},
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{keyword}\bfseries,
+  commentstyle=\color{comment}\itshape,
+  stringstyle=\color{string},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  numbersep=8pt,
+  breaklines=true,
+  showstringspaces=false,
+  tabsize=4,
+}
+
+% ── Header / Footer ──────────────────────────────────────────────────────────
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{Architectures Logicielles -- TP 2}
+\lhead{SIQ 2025/2026}
+\cfoot{\thepage}
+
+% ── Title ────────────────────────────────────────────────────────────────────
+\title{
+  \vspace{-1cm}
+  \textbf{TD/TP 2 -- Activité 2} \\[0.4em]
+  \large Style Pipe \& Filtre \\[0.2em]
+  \normalsize Architectures Logicielles -- SIQ1
+}
+\author{HIMEUR Idris-- DIAR Adem}
+\date{2025/2026}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+% =============================================================================
+\section{Introduction}
+
+L'objectif de cette activité est de transformer l'application calculatrice développée
+lors de l'Activité~1 en une architecture à base du style \textbf{Pipe \& Filtre}.
+Le code de calcul, de persistance et d'interface graphique est conservé à l'identique ;
+seule la \emph{structure de communication} entre les composants change.
+
+% =============================================================================
+\section{Description de l'architecture réalisée}
+
+\subsection{Principe général}
+
+Dans le style Pipe \& Filtre, les composants (\emph{filtres}) sont des unités de
+traitement indépendantes qui ne communiquent qu'à travers des canaux de données
+(\emph{pipes}). Chaque filtre :
+\begin{itemize}
+  \item lit ses données d'entrée depuis son \texttt{inPipe},
+  \item effectue son traitement,
+  \item publie son résultat dans son \texttt{outPipe}.
+\end{itemize}
+
+Aucun filtre ne connaît l'identité de ses voisins ; il ne voit que ses deux pipes.
+
+\subsection{Les composants}
+
+\begin{center}
+\begin{tabular}{>{\bfseries}p{3.5cm} p{9.5cm}}
+\toprule
+Composant & Responsabilités \\
+\midrule
+GuiSourceFilter &
+  Lit les saisies de l'utilisateur (opérandes, opération), \\
+& construit un \texttt{CalculationRequest} et le pousse dans \texttt{requestPipe}. \\
+\midrule
+ComputeFilter &
+  Calcul de la somme, du produit, du factoriel, \\
+& génération d'un nombre aléatoire. \\
+\midrule
+TraceFilter &
+  Sauvegarde de l'opération dans un fichier texte, \\
+& chargement et restitution de la trace persistée. \\
+\midrule
+GuiOutputAdapter &
+  Adaptateur frontière : tire le \texttt{TraceRecord} final du \texttt{tracePipe} \\
+& et met à jour l'interface graphique. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Les pipes et les messages}
+
+Trois pipes relient les composants. Chaque pipe est typé selon le message qu'il transporte :
+
+\begin{center}
+\begin{tabular}{>{\ttfamily}p{4.5cm} p{3.8cm} p{3cm} p{2.5cm}}
+\toprule
+\normalfont\bfseries Pipe & Type de message & Producteur & Consommateur \\
+\midrule
+requestPipe  & CalculationRequest  & GuiSourceFilter  & ComputeFilter \\
+resultPipe   & CalculationResult   & ComputeFilter    & TraceFilter   \\
+tracePipe    & TraceRecord         & TraceFilter      & GuiOutputAdapter \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Flux d'exécution}
+
+Lorsque l'utilisateur clique sur un bouton, \textbf{GuiSourceFilter} est déclenché :
+il lit les champs de saisie, pousse un \texttt{CalculationRequest} dans \texttt{requestPipe},
+puis appelle \texttt{pipeline.run()} qui va lancé par la suite \textbf{ComputeFilter}, \textbf{TraceFilter} et \textbf{GuiOutputAdapter}.
+
+\textbf{ComputeFilter} tire la requête, calcule le résultat et pousse un
+\texttt{CalculationResult} dans \texttt{resultPipe}.
+\textbf{TraceFilter} tire ce résultat, le persiste et pousse un \texttt{TraceRecord}
+dans \texttt{tracePipe}.
+Enfin, \textbf{GuiOutputAdapter} tire le \texttt{TraceRecord} et met à jour l'affichage.
+
+\subsection*{\colorbox{yellow!30}{\textbf{Note importante -- Composants frontières et couplage GUI}}}
+\addcontentsline{toc}{subsection}{Note importante -- Composants frontières et couplage GUI}
+
+\noindent Le style Pipe \& Filtre est conçu pour le traitement de flux de données :
+chaque filtre est une unité de transformation indépendante, sans connaissance du monde extérieur.
+Les données circulent dans un seul sens : elles entrent par un filtre source et sortent par un filtre sink.
+
+\medskip
+\noindent Dans une application à interface graphique, certaines opérations
+(la lecture des champs de saisie et mise à jour de l'affichage) ne correspondent
+pas à des transformations de données mais à des interactions avec un système externe.
+Dans ce type d'architecture, ces interactions sont généralement placées
+dans des \textbf{composants frontières}.
+
+\medskip
+\noindent Dans notre pipeline, ces responsabilités sont réparties entre deux filtres frontières :
+
+\begin{itemize}
+  \item \textbf{GuiSourceFilter} : filtre d'entrée qui lit les données saisies
+        par l'utilisateur dans \texttt{MainGUI} et les injecte dans le pipeline via
+        \texttt{requestPipe}.
+  \item \textbf{GuiOutputAdapter} : filtre de sortie qui récupère le résultat final
+        depuis \texttt{tracePipe} et met à jour l'interface graphique.
+\end{itemize}
+
+\noindent Ces filtres servent de frontière entre l'interface graphique et le
+pipeline de traitement, tandis que les filtres internes (\texttt{ComputeFilter} et
+\texttt{TraceFilter}) restent totalement indépendants de la GUI.
+
+\medskip
+\noindent La chaîne de traitement est \textbf{strictement acyclique} :
+\texttt{GuiSourceFilter} ne reçoit rien du pipeline et
+\texttt{GuiOutputAdapter} n'y envoie rien. Le flux de données suit un sens unique :
+
+\begin{center}
+\texttt{GuiSourceFilter} 
+$\xrightarrow{\texttt{requestPipe}}$ \texttt{ComputeFilter}
+$\xrightarrow{\texttt{resultPipe}}$ \texttt{TraceFilter}
+$\xrightarrow{\texttt{tracePipe}}$ \texttt{GuiOutputAdapter}
+\end{center}
+
+\noindent L'orchestration est confiée à \texttt{CalculatorPipeline}, responsable
+du câblage des pipes et de l'initialisation du flux de traitement. L'exécution
+est déclenchée par l'injection d'un message dans le pipeline via
+\texttt{GuiSourceFilter}. Chaque filtre lit les données depuis son
+\texttt{inPipe} et publie son résultat dans son \texttt{outPipe}. Aucun filtre
+ne connaît ses voisins ; seul le coordinateur définit la structure globale du pipeline.
+
+
+
+% =============================================================================
+\section{Style d'échange utilisé}
+
+Le style d'échange utilisé est le \textbf{PIPE} : les données circulent sous
+forme de \textbf{flux unidirectionnel} entre les composants.
+Chaque producteur \textbf{pousse} (\texttt{push}) son message dans le pipe ;
+le consommateur suivant le \textbf{tire} (\texttt{pull}) pour le traiter.
+Les filtres ne se connaissent pas directement -- seuls les pipes les relient.
+
+% =============================================================================
+\section{Vues de l'architecture}
+
+\subsection{Vue de développement (vue des modules)}
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=1\textwidth]{calculator_architecture.png}
+  \caption{Vue de développement}
+  \label{fig:vue_developpement}
+\end{figure}
+
+\subsection{Vue C\&C (Composants et Connecteurs)}
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=1\textwidth]{calculator_pipeline.png}
+  \caption{Vue C\&C -- Pipe \& Filtre}
+  \label{fig:vue_cc}
+\end{figure}
+
+
+% =============================================================================
+\section{Comparaison Activité 1 vs Activité 2}
+
+\begin{center}
+\begin{tabular}{p{7cm} p{7cm}}
+\toprule
+\textbf{Activité 1 -- Appel de méthode direct} &
+\textbf{Activité 2 -- Pipe \& Filtre} \\
+\midrule
+\textbf{(+) Performance} : pas de sérialisation ni de
+tampon intermédiaire ; l'appel est synchrone et instantané.
+&
+\textbf{(+) Indépendance des composants} : aucun filtre
+ne connaît ses voisins ; on peut remplacer CMP2 sans toucher
+CMP1 ni CMP3.
+\\[0.5em]
+\textbf{(+) Simplicité de la structure} : une seule classe
+centrale relie tout.
+&
+\textbf{(+) Lisibilité architecturale} : la vue C\&C montre
+immédiatement le flux de données et les responsabilités.
+\\[0.5em]
+\textbf{(-) Couplage fort} : la GUI connaît directement
+\texttt{Calcul} et \texttt{Trace} ; tout changement se propage.
+&
+\textbf{(+) Réutilisabilité et testabilité} : chaque filtre
+peut être testé isolément avec un pipe bouchon.
+\\[0.5em]
+\textbf{(-) Difficile à faire évoluer} : ajouter une étape
+de traitement implique de modifier la GUI ou le coordinateur.
+&
+\textbf{(+) Extensibilité} : ajouter un filtre revient à créer
+une nouvelle classe et à l'insérer dans la chaîne de pipes.
+\\[0.5em]
+&
+\textbf{(-) Transformations interactives difficiles} :
+le retour du résultat vers la GUI nécessite un pipe
+supplémentaire (\texttt{tracePipe} $\rightarrow$ GuiFilter),
+ce qui complexifie légèrement le câblage.
+\\[0.5em]
+&
+\textbf{(-) Overhead léger} : création d'objets messages
+à chaque opération (minime en pratique).
+\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\medskip
+\noindent\textbf{Conclusion.}
+L'Activité~1 est plus performante et plus simple pour une petite application.
+L'Activité~2 est architecturalement plus robuste : les composants sont vraiment
+indépendants, le flux de données est explicite, et l'application peut évoluer
+sans modifier les composants existants.
+
+% =============================================================================
+\end{document}

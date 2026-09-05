@@ -1,0 +1,16 @@
+flowchart TB
+
+User([User])
+
+subgraph Workstation [Client Workstation]
+  subgraph JVM [Single JVM Process]
+    App[Calculator application]
+  end
+
+  Jar[lib/interpreter.jar]
+  TraceFile[(data/track.trc)]
+end
+
+User -->|interacts with GUI| App
+App -->|in-process calls| Jar
+App -->|read / write trace| TraceFile

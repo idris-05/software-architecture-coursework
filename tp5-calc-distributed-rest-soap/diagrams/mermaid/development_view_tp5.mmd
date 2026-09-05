@@ -1,0 +1,74 @@
+classDiagram
+
+    class Main {
+        +main(args)
+    }
+
+    class Calculator {
+        +add(a, b) : double
+        +subtract(a, b) : double
+        +multiply(a, b) : double
+        +divide(a, b) : double
+    }
+
+    class HistoryRecord {
+        +id : int
+        +timestamp : String
+        +operandA : double
+        +operator : String
+        +operandB : double
+        +result : double
+        +via : String
+        +toFileLine() : String
+        +fromFileLine(line) : HistoryRecord
+    }
+
+    class HistoryManager {
+        -instance : HistoryManager
+        -nextId : int
+        +getInstance() : HistoryManager
+        +save(a, op, b, result, via)
+        +getAll() : List
+    }
+
+    class CalculatorRestService {
+        +add(req) : Response
+        +subtract(req) : Response
+        +multiply(req) : Response
+        +divide(req) : Response
+        +history() : Response
+    }
+
+    class CorsFilter {
+        +filter(req, resp)
+    }
+
+    class CalculatorSoapService {
+        <<interface>>
+        +add(a, b) : double
+        +subtract(a, b) : double
+        +multiply(a, b) : double
+        +divide(a, b) : double
+        +getHistory() : List
+    }
+
+    class CalculatorSoapServiceImpl {
+        +add(a, b) : double
+        +subtract(a, b) : double
+        +multiply(a, b) : double
+        +divide(a, b) : double
+        +getHistory() : List
+    }
+
+    Main --> CalculatorRestService : registers
+    Main --> CalculatorSoapServiceImpl : publishes
+
+    CalculatorRestService --> Calculator : calls
+    CalculatorRestService --> HistoryManager : save/getAll
+    CalculatorRestService ..> HistoryRecord : uses
+
+    CalculatorSoapServiceImpl ..|> CalculatorSoapService : implements
+    CalculatorSoapServiceImpl --> Calculator : calls
+    CalculatorSoapServiceImpl --> HistoryManager : save/getAll
+
+    HistoryManager ..> HistoryRecord : uses

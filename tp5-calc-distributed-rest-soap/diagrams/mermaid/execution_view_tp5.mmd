@@ -1,0 +1,22 @@
+flowchart LR
+
+    C[Web Client]
+
+    subgraph Server
+        RS[REST Service]
+        SS[SOAP Service]
+        CA[Calculator]
+        HM[HistoryManager]
+        F[(history.txt)]
+    end
+
+    C <-- HTTP/JSON --> RS
+    C <-- HTTP/XML --> SS
+
+    RS --> CA
+    SS --> CA
+
+    RS --> HM
+    SS --> HM
+
+    HM --> F

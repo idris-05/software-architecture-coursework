@@ -1,0 +1,70 @@
+---
+title: "Vue Developpement - architecture actuelle"
+---
+flowchart TB
+    MAIN["Main\n(composition root)"]
+
+    subgraph GUI["calculatorApp.gui"]
+        MAINGUI["MainGUI"]
+        GUISRC["GuiSourceFilter"]
+        GUIADAPT["GuiOutputAdapter"]
+    end
+
+    subgraph PIPELINE["calculatorApp.pipeline"]
+        PIPELINECORE["CalculatorPipeline"]
+    end
+
+    subgraph CALC["calculatorApp.calculator"]
+        COMPUTE["ComputeFilter"]
+        CALCUL["Calcul"]
+    end
+
+    subgraph TRACE["calculatorApp.trace"]
+        TRACEFILTER["TraceFilter"]
+        TRACECORE["Trace"]
+        OPERATION["Operation"]
+    end
+
+    subgraph PIPE["calculatorApp.pipe"]
+        BASEFILTER["Filter<IN,OUT>"]
+        BASEPIPE["Pipe<T>"]
+        DTOREQ["CalculationRequest"]
+        DTORES["CalculationResult"]
+        DTOTRC["TraceRecord"]
+    end
+
+    LIB[("lib/interpreter.jar")]
+    FS[("data/track.trc")]
+
+    MAIN --> MAINGUI
+    MAIN --> PIPELINECORE
+    MAIN --> GUISRC
+
+    GUISRC --> MAINGUI
+    GUISRC --> PIPELINECORE
+    GUISRC --> BASEFILTER
+    GUISRC --> BASEPIPE
+    GUISRC --> DTOREQ
+
+    PIPELINECORE --> MAINGUI
+    PIPELINECORE --> COMPUTE
+    PIPELINECORE --> TRACEFILTER
+    PIPELINECORE --> GUIADAPT
+    PIPELINECORE --> BASEPIPE
+
+    COMPUTE --> BASEFILTER
+    COMPUTE --> CALCUL
+    COMPUTE --> DTOREQ
+    COMPUTE --> DTORES
+
+    TRACEFILTER --> BASEFILTER
+    TRACEFILTER --> TRACECORE
+    TRACEFILTER --> DTORES
+    TRACEFILTER --> DTOTRC
+
+    GUIADAPT --> MAINGUI
+    GUIADAPT --> DTOTRC
+
+    CALCUL --> LIB
+    TRACECORE --> OPERATION
+    TRACECORE --> FS

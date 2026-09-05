@@ -1,0 +1,133 @@
+classDiagram
+    direction TB
+
+    class HissabServlet {
+        <<HttpServlet>>
+        -ocrService : OcrService
+        -calcService : CalcService
+        -traceService : TraceService
+        +doGet()
+        +doPost()
+        -processUpload()
+        -processManual()
+        -evaluateExpression()
+    }
+
+    class HistoryServlet {
+        <<HttpServlet>>
+        -traceService : TraceService
+        +doGet()
+        -exportCsv()
+    }
+
+    class FileUploadHelper {
+        <<utility>>
+        +extract(request) UploadedFile
+    }
+
+    class CalcService {
+        <<interface>>
+        +evaluate(expression) double
+        +evaluateDetailed(expression) CalculationDetails
+    }
+
+    class CalcEJB {
+        <<Stateless>>
+        +add(a, b) double
+        +subtract(a, b) double
+        +multiply(a, b) double
+        +divide(a, b) double
+        +evaluate(expression) double
+        +evaluateDetailed(expression) CalculationDetails
+    }
+
+    class ExpressionEvaluator {
+        +evaluate(expr, calc) double
+        +evaluateDetailed(expr, calc) CalculationDetails
+        -tokenize(expression) List
+        -precedence(op) int
+    }
+
+    class CalculationDetails {
+        <<record>>
+        +result() double
+        +steps() List~String~
+    }
+
+    class OcrService {
+        <<interface>>
+        +extractExpressions(data, mimeType) List~String~
+    }
+
+    class OcrEJB {
+        <<Stateless>>
+        +extractExpressions(data, mimeType) List~String~
+    }
+
+    class TraceService {
+        <<interface>>
+        +save(trace)
+        +findAll() List~ComputationTrace~
+        +searchByExpression(keyword) List~ComputationTrace~
+        +countAll() long
+        +countByStatus(status) long
+    }
+
+    class TraceEJB {
+        <<Stateless>>
+        -em : EntityManager
+        +save(trace)
+        +findAll() List~ComputationTrace~
+        +searchByExpression(keyword) List~ComputationTrace~
+    }
+
+    class ComputationTrace {
+        <<Entity>>
+        -id : Long
+        -imageName : String
+        -extractedExpression : String
+        -sanitizedExpression : String
+        -result : String
+        -providedAnswer : String
+        -status : String
+        -computedAt : LocalDateTime
+    }
+
+    class MathSanitizer {
+        <<utility>>
+        +sanitize(raw) String
+    }
+
+    class HissabException {
+        <<Exception>>
+    }
+
+    class CalcException {
+        <<Exception>>
+    }
+
+    class OcrProcessingException {
+        <<Exception>>
+    }
+
+    CalcException --|> HissabException
+    OcrProcessingException --|> HissabException
+
+    CalcEJB ..|> CalcService
+    OcrEJB ..|> OcrService
+    TraceEJB ..|> TraceService
+
+    HissabServlet --> OcrService
+    HissabServlet --> CalcService
+    HissabServlet --> TraceService
+    HissabServlet --> MathSanitizer
+    HissabServlet --> FileUploadHelper
+    HistoryServlet --> TraceService
+
+    CalcEJB --> ExpressionEvaluator
+    ExpressionEvaluator --> CalculationDetails
+    TraceEJB --> ComputationTrace
+
+    CalcEJB ..> CalcException
+    OcrEJB ..> OcrProcessingException
+    MathSanitizer ..> CalcException
